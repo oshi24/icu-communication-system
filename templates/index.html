@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ICU Nurse Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #2E86AB, #A23B72);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .system-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #4CAF50; }
+        .status-warning { background: #FF9800; }
+        .status-offline { background: #F44336; }
+
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-content {
+            padding: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-card.high { background: linear-gradient(135deg, #FF6B6B, #EE5A52); }
+        .stat-card.medium { background: linear-gradient(135deg, #FFB74D, #FF9800); }
+        .stat-card.low { background: linear-gradient(135deg, #81C784, #66BB6A); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-secondary { background: #6c757d; color: white; }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .requests-container {
+            margin-top: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-size: 1.2rem;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        .request-card {
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .request-card.high-risk {
+            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
+            border-left: 8px solid #D32F2F;
+            color: white;
+        }
+
+        .request-card.medium-risk {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            border-left: 8px solid #F57C00;
+            color: white;
+        }
+
+        .request-card.low-risk {
+            background: linear-gradient(135deg, #81C784, #66BB6A);
+            border-left: 8px solid #388E3C;
+            color: white;
+        }
+
+        .request-card.acknowledged {
+            background: linear-gradient(135deg, #BDBDBD, #9E9E9E) !important;
+            border-left: 8px solid #616161 !important;
+            opacity: 0.8;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+        }
+
+        .bed-number {
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .patient-info {
+            flex: 1;
+            margin-left: 2rem;
+        }
+
+        .patient-id {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .request-message {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .device-info {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-style: italic;
+            margin-bottom: 0.3rem;
+        }
+
+        .time-elapsed {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .time-critical {
+            color: #ffeb3b;
+            font-weight: bold;
+            font-size: 1.2rem;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .status-tag {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            margin-top: 0.5rem;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .request-actions .btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 0.95rem;
+        }
+
+        .floating-refresh {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .floating-refresh:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(0,123,255,0.4);
+        }
+
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: #28a745;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1001;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: black;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header-info {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+            
+            .bed-number {
+                font-size: 2.5rem;
+            }
+            
+            .patient-info {
+                margin-left: 1rem;
+            }
+            
+            .request-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 IoT-Enabled ICU Nurse Dashboard</h1>
+            <div class="header-info">
+                <span>Welcome, Nurse Emily</span>
+                <span id="current-time"></span>
+            </div>
+            <div class="system-status">
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    <span>Cloud Platform: Online</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    <span id="device-status">IoT Devices: 12/12 Connected</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    <span>Last Sync: <span id="last-sync">Just now</span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="controls">
+                <div class="stats">
+                    <div class="stat-card high">
+                        <span class="stat-number" id="high-count">0</span>
+                        <span>🚨 High Risk</span>
+                    </div>
+                    <div class="stat-card medium">
+                        <span class="stat-number" id="medium-count">0</span>
+                        <span>⚠️ Medium Risk</span>
+                    </div>
+                    <div class="stat-card low">
+                        <span class="stat-number" id="low-count">0</span>
+                        <span>📋 Low Risk</span>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="testConnection()">
+                        📡 Test IoT Connection
+                    </button>
+                    <button class="btn btn-danger" onclick="addEmergencyRequest()">
+                        ➕ Simulate Emergency
+                    </button>
+                    <button class="btn btn-warning" onclick="clearResolved()">
+                        🧹 Clear Resolved
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportReport()">
+                        📊 Export Report
+                    </button>
+                </div>
+            </div>
+
+            <div class="requests-container">
+                <h2 class="section-title">📋 Active Requests (<span id="active-count">0</span>)</h2>
+                <div id="requests-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-refresh" onclick="refreshDashboard()" title="Refresh Dashboard">
+        🔄
+    </button>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Global state
+        let requests = [];
+        let lastUpdate = new Date();
+        let connectedDevices = 12;
+        let totalDevices = 12;
+
+        // Request messages and their risk levels
+        const requestTypes = [
+            { message: "EMERGENCY HELP", risk: "HIGH" },
+            { message: "PAIN / DISCOMFORT", risk: "MEDIUM" },
+            { message: "BREATHING / REPOSITION", risk: "MEDIUM" },
+            { message: "BASIC NEED (Water/Washroom)", risk: "LOW" }
+        ];
+
+        const bedNumbers = ["1A", "1B", "2A", "2B", "3A", "3B", "4A", "4B", "5A", "5B", 
+                           "6A", "6B", "7A", "7B", "8A", "8B", "9A", "9B", "10A", "10B"];
+        
+        const patientNames = ["J.D.", "M.T.", "L.K.", "A.S.", "R.P.", "C.M.", "D.W.", "E.R.", "F.G.", "H.L."];
+
+        // Utility functions
+        function generateId() {
+            return 'req_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function getRandomElement(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function generatePatientRequest() {
+            const requestType = getRandomElement(requestTypes);
+            const activeBeds = requests.filter(r => r.status !== 'resolved').map(r => r.bedNumber);
+            const availableBeds = bedNumbers.filter(bed => !activeBeds.includes(bed));
+            
+            if (availableBeds.length === 0) return null;
+
+            return {
+                id: generateId(),
+                bedNumber: getRandomElement(availableBeds),
+                patientId: `Patient ${getRandomElement(patientNames)}`,
+                message: requestType.message,
+                riskLevel: requestType.risk,
+                timestamp: new Date(Date.now() - Math.random() * 15 * 60 * 1000), // 0-15 minutes ago
+                status: 'new'
+            };
+        }
+
+        function sortRequests(requests) {
+            const riskPriority = { 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3 };
+            const activeRequests = requests.filter(r => r.status !== 'resolved');
+            
+            return activeRequests.sort((a, b) => {
+                if (riskPriority[a.riskLevel] !== riskPriority[b.riskLevel]) {
+                    return riskPriority[a.riskLevel] - riskPriority[b.riskLevel];
+                }
+                return a.timestamp - b.timestamp;
+            });
+        }
+
+        function getTimeElapsed(timestamp) {
+            const elapsed = new Date() - timestamp;
+            const minutes = Math.floor(elapsed / 60000);
+            
+            if (minutes < 1) return "Just now";
+            if (minutes === 1) return "1 min ago";
+            return `${minutes} min ago`;
+        }
+
+        function isTimeCritical(timestamp, riskLevel) {
+            const elapsedMinutes = (new Date() - timestamp) / 60000;
+            
+            if (riskLevel === "HIGH" && elapsedMinutes > 2) return true;
+            if (riskLevel === "MEDIUM" && elapsedMinutes > 5) return true;
+            if (riskLevel === "LOW" && elapsedMinutes > 10) return true;
+            return false;
+        }
+
+        function getRiskIcon(riskLevel) {
+            const icons = {
+                'HIGH': '🚨',
+                'MEDIUM': '⚠️',
+                'LOW': '📋'
+            };
+            return icons[riskLevel] || '📋';
+        }
+
+        function getRiskClass(riskLevel, status) {
+            if (status === 'acknowledged') return 'acknowledged';
+            
+            const classes = {
+                'HIGH': 'high-risk',
+                'MEDIUM': 'medium-risk',
+                'LOW': 'low-risk'
+            };
+            return classes[riskLevel] || 'low-risk';
+        }
+
+        // UI functions
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+            
+            // Update last sync time
+            const syncTime = new Date(lastUpdate);
+            const timeDiff = Math.floor((now - syncTime) / 1000);
+            let syncText;
+            
+            if (timeDiff < 60) {
+                syncText = timeDiff < 5 ? "Just now" : `${timeDiff}s ago`;
+            } else {
+                syncText = `${Math.floor(timeDiff / 60)}m ago`;
+            }
+            
+            document.getElementById('last-sync').textContent = syncText;
+            document.getElementById('device-status').textContent = `IoT Devices: ${connectedDevices}/${totalDevices} Connected`;
+        }
+
+        function updateStats() {
+            const activeRequests = requests.filter(r => r.status !== 'resolved');
+            const highCount = activeRequests.filter(r => r.riskLevel === 'HIGH').length;
+            const mediumCount = activeRequests.filter(r => r.riskLevel === 'MEDIUM').length;
+            const lowCount = activeRequests.filter(r => r.riskLevel === 'LOW').length;
+            
+            document.getElementById('high-count').textContent = highCount;
+            document.getElementById('medium-count').textContent = mediumCount;
+            document.getElementById('low-count').textContent = lowCount;
+            document.getElementById('active-count').textContent = activeRequests.length;
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function renderRequests() {
+            const sortedRequests = sortRequests(requests);
+            const requestsList = document.getElementById('requests-list');
+            
+            if (sortedRequests.length === 0) {
+                requestsList.innerHTML = `
+                    <div class="no-requests">
+                        🟢 No active patient requests at this time.
+                        <br><br>
+                        🎉 All patients are being attended to!
+                    </div>
+                `;
+                return;
+            }
+
+            requestsList.innerHTML = sortedRequests.map(request => {
+                const riskClass = getRiskClass(request.riskLevel, request.status);
+                const riskIcon = getRiskIcon(request.riskLevel);
+                const timeElapsed = getTimeElapsed(request.timestamp);
+                const isCritical = isTimeCritical(request.timestamp, request.riskLevel);
+                
+                return `
+                    <div class="request-card ${riskClass}">
+                        <div class="request-header">
+                            <h2 class="bed-number">${riskIcon} Bed ${request.bedNumber}</h2>
+                            <div class="patient-info">
+                                <div class="patient-id">${request.patientId}</div>
+                                <div class="request-message">📞 ${request.message}</div>
+                                <div class="device-info">📱 Device ID: ESP32_${request.bedNumber}</div>
+                                <div class="${isCritical ? 'time-critical' : 'time-elapsed'}">
+                                    🕐 ${timeElapsed} ${isCritical ? '⚠️ OVERDUE' : ''}
+                                </div>
+                                ${request.status === 'acknowledged' ? '<span class="status-tag">✅ ACKNOWLEDGED</span>' : ''}
+                            </div>
+                        </div>
+                        
+                        <div class="request-actions">
+                            <button class="btn btn-success" 
+                                    onclick="acknowledgeRequest('${request.id}')"
+                                    ${request.status === 'acknowledged' ? 'disabled' : ''}>
+                                ${request.status === 'acknowledged' ? '✅ Acknowledged' : '✅ Acknowledge'}
+                            </button>
+                            
+                            <button class="btn btn-primary" onclick="resolveRequest('${request.id}')">
+                                ✅ Resolve
+                            </button>
+                            
+                            ${request.riskLevel === 'HIGH' || request.riskLevel === 'MEDIUM' ? 
+                                `<button class="btn btn-warning" onclick="alertDoctor('${request.id}')">
+                                    🚨 Alert Doctor
+                                </button>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Action functions
+        function acknowledgeRequest(requestId) {
+            const request = requests.find(r => r.id === requestId);
+            if (request && request.status === 'new') {
+                request.status = 'acknowledged';
+                lastUpdate = new Date(); // Update sync time
+                showNotification(`✅ Request from Bed ${request.bedNumber} acknowledged - Patient notified via bedside display`, 'success');
+                updateDashboard();
+            }
+        }
+
+        function resolveRequest(requestId) {
+            const request = requests.find(r => r.id === requestId);
+            if (request) {
+                request.status = 'resolved';
+                lastUpdate = new Date(); // Update sync time
+                showNotification(`✅ Request from Bed ${request.bedNumber} resolved - Data logged to cloud platform`, 'success');
+                updateDashboard();
+            }
+        }
+
+        function alertDoctor(requestId) {
+            const request = requests.find(r => r.id === requestId);
+            if (request) {
+                showNotification(`🚨 DOCTOR ALERT SENT via SMS/Email for Bed ${request.bedNumber} - ${request.riskLevel} priority case!`, 'warning');
+                
+                // Simulate doctor alert system integration
+                console.log(`Doctor Alert System: Sending alert for Bed ${request.bedNumber}`, {
+                    patientId: request.patientId,
+                    riskLevel: request.riskLevel,
+                    message: request.message,
+                    timestamp: request.timestamp,
+                    deviceId: `ESP32_${request.bedNumber}`
+                });
+            }
+        }
+
+        function testConnection() {
+            showNotification('Testing IoT device connections...', 'warning');
+            
+            // Simulate connection test
+            setTimeout(() => {
+                const randomDeviceIssue = Math.random() < 0.1; // 10% chance of device issue
+                
+                if (randomDeviceIssue) {
+                    connectedDevices = Math.max(8, connectedDevices - 1);
+                    showNotification(`⚠️ Connection issue detected! ${connectedDevices}/${totalDevices} devices online`, 'error');
+                } else {
+                    connectedDevices = totalDevices;
+                    showNotification('✅ All IoT devices connected successfully!', 'success');
+                }
+                
+                updateDashboard();
+            }, 2000);
+        }
+
+        function exportReport() {
+            const activeRequests = requests.filter(r => r.status !== 'resolved');
+            const resolvedToday = requests.filter(r => {
+                const today = new Date();
+                const requestDate = new Date(r.timestamp);
+                return r.status === 'resolved' && 
+                       requestDate.toDateString() === today.toDateString();
+            });
+            
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                activeRequests: activeRequests.length,
+                resolvedToday: resolvedToday.length,
+                deviceStatus: `${connectedDevices}/${totalDevices}`,
+                riskBreakdown: {
+                    high: activeRequests.filter(r => r.riskLevel === 'HIGH').length,
+                    medium: activeRequests.filter(r => r.riskLevel === 'MEDIUM').length,
+                    low: activeRequests.filter(r => r.riskLevel === 'LOW').length
+                },
+                requests: activeRequests
+            };
+            
+            // In a real system, this would export to PDF or send to hospital management system
+            console.log('ICU Dashboard Report:', reportData);
+            showNotification('📊 Report generated and logged to console (would export to hospital system)', 'success');
+        }
+
+        function addEmergencyRequest() {
+            const activeBeds = requests.filter(r => r.status !== 'resolved').map(r => r.bedNumber);
+            const availableBeds = bedNumbers.filter(bed => !activeBeds.includes(bed));
+            
+            if (availableBeds.length === 0) {
+                showNotification('All beds currently have active requests!', 'error');
+                return;
+            }
+
+            const emergencyRequest = {
+                id: generateId(),
+                bedNumber: getRandomElement(availableBeds),
+                patientId: `Patient ${getRandomElement(patientNames)}`,
+                message: "EMERGENCY HELP",
+                riskLevel: "HIGH",
+                timestamp: new Date(),
+                status: 'new'
+            };
+            
+            requests.push(emergencyRequest);
+            lastUpdate = new Date(); // Update sync time
+            showNotification(`🚨 EMERGENCY: Patient at Bed ${emergencyRequest.bedNumber} pressed emergency button!`, 'error');
+            updateDashboard();
+        }
+
+        function clearResolved() {
+            const resolvedCount = requests.filter(r => r.status === 'resolved').length;
+            requests = requests.filter(r => r.status !== 'resolved');
+            showNotification(`${resolvedCount} resolved requests cleared!`);
+            updateDashboard();
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all requests?')) {
+                requests = [];
+                showNotification('All requests cleared!');
+                updateDashboard();
+            }
+        }
+
+        function refreshDashboard() {
+            updateDashboard();
+            showNotification('Dashboard refreshed!');
+        }
+
+        function updateDashboard() {
+            updateCurrentTime();
+            updateStats();
+            renderRequests();
+        }
+
+        // Initialize dashboard
+        function initializeDashboard() {
+            // Generate initial sample data
+            for (let i = 0; i < 5; i++) {
+                const request = generatePatientRequest();
+                if (request) {
+                    requests.push(request);
+                }
+            }
+            
+            updateDashboard();
+            
+            // Set up periodic updates
+            setInterval(updateCurrentTime, 1000);
+            setInterval(() => {
+                // Occasionally add new requests (simulate real IoT button presses)
+                if (Math.random() < 0.15 && requests.filter(r => r.status !== 'resolved').length < 8) {
+                    const newRequest = generatePatientRequest();
+                    if (newRequest) {
+                        requests.push(newRequest);
+                        lastUpdate = new Date();
+                        const deviceId = `ESP32_${newRequest.bedNumber}`;
+                        showNotification(`📱 New request from ${deviceId}: Patient pressed "${newRequest.message}" button`, 'warning');
+                        updateDashboard();
+                    }
+                }
+                
+                // Update time displays
+                updateDashboard();
+            }, 30000); // Every 30 seconds
+        }
+
+        // Start the dashboard when page loads
+        window.addEventListener('load', initializeDashboard);
+    </script>
+</body>
+</html>

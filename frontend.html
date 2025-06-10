@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered ICU Communication Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #2E86AB, #A23B72);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .ai-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #4CAF50; }
+        .status-warning { background: #FF9800; }
+        .status-offline { background: #F44336; }
+
+        .dashboard-content {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-card.critical { background: linear-gradient(135deg, #FF6B6B, #EE5A52); }
+        .stat-card.high { background: linear-gradient(135deg, #FFB74D, #FF9800); }
+        .stat-card.medium { background: linear-gradient(135deg, #81C784, #66BB6A); }
+        .stat-card.low { background: linear-gradient(135deg, #64B5F6, #42A5F5); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .ml-insights {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .request-card {
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .request-card.CRITICAL {
+            background: linear-gradient(135deg, #D32F2F, #B71C1C);
+            border-left: 8px solid #F44336;
+            color: white;
+        }
+
+        .request-card.HIGH {
+            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
+            border-left: 8px solid #D32F2F;
+            color: white;
+        }
+
+        .request-card.MEDIUM {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            border-left: 8px solid #F57C00;
+            color: white;
+        }
+
+        .request-card.LOW {
+            background: linear-gradient(135deg, #81C784, #66BB6A);
+            border-left: 8px solid #388E3C;
+            color: white;
+        }
+
+        .ml-analysis {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .symptom-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .symptom-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .confidence-bar {
+            background: rgba(255, 255, 255, 0.2);
+            height: 6px;
+            border-radius: 3px;
+            margin: 0.5rem 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+
+        .action-btn {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .model-status {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .prediction-confidence {
+            margin: 1rem 0;
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🤖 AI-Powered ICU Communication Dashboard</h1>
+            <div class="ai-status">
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    ML Model Active
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    Symptom Analysis Online
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot status-warning"></div>
+                    Auto-Classification: ON
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    Real-time Processing
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="main-content">
+                <div class="controls">
+                    <div class="stats">
+                        <div class="stat-card critical">
+                            <span class="stat-number" id="critical-count">1</span>
+                            <small>Critical</small>
+                        </div>
+                        <div class="stat-card high">
+                            <span class="stat-number" id="high-count">2</span>
+                            <small>High Priority</small>
+                        </div>
+                        <div class="stat-card medium">
+                            <span class="stat-number" id="medium-count">1</span>
+                            <small>Medium</small>
+                        </div>
+                        <div class="stat-card low">
+                            <span class="stat-number" id="low-count">1</span>
+                            <small>Low Priority</small>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="refreshAnalysis()">🔄 Refresh AI</button>
+                        <button class="btn btn-success" onclick="runBatchAnalysis()">⚡ Batch Analyze</button>
+                    </div>
+                </div>
+
+                <div class="ml-insights">
+                    <h3>🧠 AI Insights & Alerts</h3>
+                    <div class="insight-item">
+                        <span>⚠️</span>
+                        <div>
+                            <strong>Escalation Recommended:</strong> Room 302-A showing cardiovascular symptoms with 94% confidence
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span>📊</span>
+                        <div>
+                            <strong>Pattern Detected:</strong> Respiratory symptoms cluster in Ward 3 - possible infection spread
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <span>🎯</span>
+                        <div>
+                            <strong>Prediction Accuracy:</strong> 92% successful triage classifications in last 24 hours
+                        </div>
+                    </div>
+                </div>
+
+                <div id="requests-container">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; color: #333;">📢 AI-Analyzed Communication Requests</h2>
+                    
+                    <!-- Critical Priority Request -->
+                    <div class="request-card CRITICAL" data-id="1">
+                        <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.2); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                            2 min ago
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3>🛏️ Room 302-A - CRITICAL</h3>
+                                <div style="font-size: 0.9rem; opacity: 0.9; margin: 0.5rem 0;">
+                                    Patient: John Smith | Age: 67 | Condition: Post-operative
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.3); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                                CRITICAL PRIORITY
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 1.1rem; line-height: 1.6; margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            💊 "I'm experiencing severe chest pain that started suddenly. It feels like pressure and the pain is radiating to my left arm. I'm also feeling short of breath and dizzy."
+                        </div>
+
+                        <div class="ml-analysis">
+                            <strong>🤖 AI Analysis:</strong>
+                            <div class="symptom-tags">
+                                <span class="symptom-tag">Chest Pain (96%)</span>
+                                <span class="symptom-tag">Shortness of Breath (89%)</span>
+                                <span class="symptom-tag">Dizziness (87%)</span>
+                                <span class="symptom-tag">Radiating Pain (92%)</span>
+                            </div>
+                            <div class="prediction-confidence">
+                                <strong>Predicted Condition: Cardiovascular Emergency</strong>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 94%;"></div>
+                                </div>
+                                <small>Confidence: 94% | Recommendation: Immediate intervention</small>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                            <button class="action-btn" onclick="respondToRequest(1, 'emergency')">🚨 Emergency Response</button>
+                            <button class="action-btn" onclick="respondToRequest(1, 'cardiology')">💓 Call Cardiology</button>
+                            <button class="action-btn" onclick="respondToRequest(1, 'vitals')">📊 Check Vitals</button>
+                        </div>
+                    </div>
+
+                    <!-- High Priority Request -->
+                    <div class="request-card HIGH" data-id="2">
+                        <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.2); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                            5 min ago
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3>🛏️ Room 305-B</h3>
+                                <div style="font-size: 0.9rem; opacity: 0.9; margin: 0.5rem 0;">
+                                    Patient: Maria Garcia | Age: 54 | Condition: Pneumonia treatment
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.3); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                                HIGH PRIORITY
+                            </div>
+                        </div>
+
+                        <div style="font-size: 1.1rem; line-height: 1.6; margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            😰 "I'm having trouble breathing and my oxygen mask feels uncomfortable. I'm also feeling very fatigued and have been coughing up phlegm."
+                        </div>
+
+                        <div class="ml-analysis">
+                            <strong>🤖 AI Analysis:</strong>
+                            <div class="symptom-tags">
+                                <span class="symptom-tag">Shortness of Breath (91%)</span>
+                                <span class="symptom-tag">Coughing (88%)</span>
+                                <span class="symptom-tag">Fatigue (85%)</span>
+                                <span class="symptom-tag">Chest Congestion (82%)</span>
+                            </div>
+                            <div class="prediction-confidence">
+                                <strong>Predicted Condition: Respiratory Infection</strong>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 89%;"></div>
+                                </div>
+                                <small>Confidence: 89% | Recommendation: Adjust oxygen therapy</small>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                            <button class="action-btn" onclick="respondToRequest(2, 'oxygen')">💨 Adjust Oxygen</button>
+                            <button class="action-btn" onclick="respondToRequest(2, 'respiratory')">🫁 Respiratory Therapy</button>
+                            <button class="action-btn" onclick="respondToRequest(2, 'respond')">📝 Send Response</button>
+                        </div>
+                    </div>
+
+                    <!-- Medium Priority Request -->
+                    <div class="request-card MEDIUM" data-id="3">
+                        <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.2); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                            12 min ago
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                            <div>
+                                <h3>🛏️ Room 301-A</h3>
+                                <div style="font-size: 0.9rem; opacity: 0.9; margin: 0.5rem 0;">
+                                    Patient: Robert Johnson | Age: 45 | Condition: Recovery
+                                </div>
+                            </div>
+                            <div style="background: rgba(255,255,255,0.3); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                                MEDIUM PRIORITY
+                            </div>
+                        </div>
+
+                        <div style="font-size: 1.1rem; line-height: 1.6; margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                            🍽️ "I'm feeling much better today but I have some questions about my diet and when I can have solid food again. Also experiencing mild headache."
+                        </div>
+
+                        <div class="ml-analysis">
+                            <strong>🤖 AI Analysis:</strong>
+                            <div class="symptom-tags">
+                                <span class="symptom-tag">Headache (76%)</span>
+                                <span class="symptom-tag">General Inquiry (95%)</span>
+                            </div>
+                            <div class="prediction-confidence">
+                                <strong>Predicted Condition: Recovery/General Care</strong>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: 78%;"></div>
+                                </div>
+                                <small>Confidence: 78% | Recommendation: Routine care consultation</small>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                            <button class="action-btn" onclick="respondToRequest(3, 'dietary')">🥗 Dietary Consult</button>
+                            <button class="action-btn" onclick="respondToRequest(3, 'respond')">📝 Send Response</button>
+                            <button class="action-btn" onclick="respondToRequest(3, 'routine')">📋 Add to Routine</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="model-status">
+                    <h3>🧠 ML Model Status</h3>
+                    <div style="margin: 1rem 0;">
+                        <strong>Model:</strong> Multi-Label Medical Classifier<br>
+                        <strong>Accuracy:</strong> 92.4%<br>
+                        <strong>Last Updated:</strong> 2 hours ago<br>
+                        <strong>Training Samples:</strong> 800+
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <h4>📊 Live Analytics</h4>
+                    <div style="margin: 1rem 0;">
+                        <strong>Today's Classifications:</strong><br>
+                        ✅ Successful: 47/51 (92%)<br>
+                        ⚠️ Manual Override: 4<br>
+                        🔄 Auto-Escalated: 12<br>
+                        📈 Response Time: 1.2min avg
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <h4>🎯 Top Predicted Symptoms</h4>
+                    <div style="margin: 1rem 0;">
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                            <span>Chest Pain</span>
+                            <span style="color: #FF6B6B;">High Risk</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                            <span>Shortness of Breath</span>
+                            <span style="color: #FF9800;">Med Risk</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                            <span>Fatigue</span>
+                            <span style="color: #4CAF50;">Low Risk</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0;">
+                            <span>Headache</span>
+                            <span style="color: #4CAF50;">Low Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 10px;">
+                    <h4>⚙️ AI Configuration</h4>
+                    <div style="margin: 1rem 0;">
+                        <label style="display: flex; align-items: center; margin: 0.5rem 0;">
+                            <input type="checkbox" checked> Auto-classify new requests
+                        </label>
+                        <label style="display: flex; align-items: center; margin: 0.5rem 0;">
+                            <input type="checkbox" checked> Real-time symptom analysis
+                        </label>
+                        <label style="display: flex; align-items: center; margin: 0.5rem 0;">
+                            <input type="checkbox"> Send ML insights to doctors
+                        </label>
+                        <label style="display: flex; align-items: center; margin: 0.5rem 0;">
+                            <input type="checkbox" checked> Auto-escalate critical cases
+                        </label>
+                    </div>
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="retrain_model()">
+                        🔄 Retrain Model
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="notification-toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        // ML Model Implementation (Simplified for frontend)
+        class MedicalMLModel {
+            constructor() {
+                this.conditions = {
+                    'Cardiovascular Disease': {
+                        'primary_symptoms': ['Chest Pain', 'High Blood Pressure', 'Irregular Heartbeat'],
+                        'secondary_symptoms': ['Shortness of Breath', 'Fatigue', 'Dizziness', 'Swelling in Legs'],
+                        'rare_symptoms': ['Nausea', 'Cold Sweats', 'Back Pain']
+                    },
+                    'Respiratory Infection': {
+                        'primary_symptoms': ['Coughing', 'Shortness of Breath', 'Fever'],
+                        'secondary_symptoms': ['Chest Congestion', 'Fatigue', 'Headache', 'Sore Throat'],
+                        'rare_symptoms': ['Chills', 'Body Aches', 'Loss of Appetite']
+                    },
+                    'Recovery/General Care': {
+                        'primary_symptoms': ['General Inquiry', 'Comfort Request'],
+                        'secondary_symptoms': ['Mild Headache', 'Dietary Questions', 'Position Adjustment'],
+                        'rare_symptoms': ['Mild Discomfort']
+                    }
+                };
+
+                this.symptomKeywords = {
+                    'Chest Pain': ['chest pain', 'chest pressure', 'heart pain', 'chest discomfort'],
+                    'Shortness of Breath': ['trouble breathing', 'hard to breathe', 'short of breath', 'breathing difficulty'],
+                    'Dizziness': ['dizzy', 'lightheaded', 'faint'],
+                    'Fatigue': ['tired', 'exhausted', 'weak', 'fatigue'],
+                    'Coughing': ['cough', 'coughing', 'phlegm'],
+                    'Headache': ['headache', 'head pain', 'migraine'],
+                    'Fever': ['fever', 'hot', 'temperature'],
+                    'Nausea': ['nauseous', 'sick', 'queasy'],
+                    'General Inquiry': ['question', 'when can', 'information about', 'feeling better']
+                };
+
+                this.isModelReady = true;
+            }
+
+            analyzeText(text) {
+                const detectedSymptoms = [];
+                const confidenceScores = {};
+                
+                // Analyze text for symptoms
+                for (const [symptom, keywords] of Object.entries(this.symptomKeywords)) {
+                    let confidence = 0;
+                    for (const keyword of keywords) {
+                        if (text.toLowerCase().includes(keyword)) {
+                            confidence += 0.2;
+                        }
+                    }
+                    
+                    if (confidence > 0) {
+                        detectedSymptoms.push(symptom);
+                        confidenceScores[symptom] = Math.min(confidence * 100, 95);
+                    }
+                }
+
+                // Determine priority based on symptoms
+                let priority = 'LOW';
+                let conditionPrediction = 'General Care';
+                let overallConfidence = 60;
+
+                // Critical symptoms
+                if (detectedSymptoms.some(s => ['Chest Pain', 'Shortness of Breath'].includes(s))) {
+                    priority = 'CRITICAL';
+                    conditionPrediction = 'Cardiovascular Emergency';
+                    overallConfidence = 94;
+                } else if (detectedSymptoms.some(s => ['Coughing', 'Fever'].includes(s))) {
+                    priority = 'HIGH';
+                    conditionPrediction = 'Respiratory Infection';
+                    overallConfidence = 89;
+                } else if (detectedSymptoms.some(s => ['Headache', 'Fatigue'].includes(s))) {
+                    priority = 'MEDIUM';
+                    conditionPrediction = 'Recovery/General Care';
+                    overallConfidence = 78;
+                }
+
+                return {
+                    symptoms: detectedSymptoms,
+                    confidenceScores: confidenceScores,
+                    priority: priority,
+                    conditionPrediction: conditionPrediction,
+                    overallConfidence: overallConfidence,
+                    recommendation: this.getRecommendation(priority, conditionPrediction)
+                };
+            }
+
+            getRecommendation(priority, condition) {
+                const recommendations = {
+                    'CRITICAL': 'Immediate intervention required',
+                    'HIGH': 'Rapid assessment needed',
+                    'MEDIUM': 'Monitor and schedule consultation',
+                    'LOW': 'Routine follow-up appropriate'
+                };
+                return recommendations[priority] || 'Standard care protocol';
+            }
+
+            retrain(newData) {
+                // Simulate model retraining
+                console.log('Retraining model with new data...');
+                return { success: true, accuracy: Math.random() * 5 + 90 };
+            }
+        }
+
+        // Initialize ML Model
+        const mlModel = new MedicalMLModel();
+        let requestCounter = 3;
+
+        // Dashboard Functions
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `notification-toast show`;
+            
+            if (type === 'error') {
+                toast.style.background = '#dc3545';
+            } else if (type === 'warning') {
+                toast.style.background = '#ffc107';
+                toast.style.color = '#000';
+            } else {
+                toast.style.background = '#28a745';
+                toast.style.color = '#fff';
+            }
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateStats() {
+            const cards = document.querySelectorAll('.request-card');
+            const stats = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
+            
+            cards.forEach(card => {
+                const priority = card.classList[1];
+                if (stats[priority] !== undefined) {
+                    stats[priority]++;
+                }
+            });
+            
+            document.getElementById('critical-count').textContent = stats.CRITICAL;
+            document.getElementById('high-count').textContent = stats.HIGH;
+            document.getElementById('medium-count').textContent = stats.MEDIUM;
+            document.getElementById('low-count').textContent = stats.LOW;
+        }
+
+        function refreshAnalysis() {
+            showToast('🤖 AI analysis refreshed successfully!');
+            
+            // Simulate analysis refresh with some visual feedback
+            const analysisElements = document.querySelectorAll('.ml-analysis');
+            analysisElements.forEach(element => {
+                element.style.opacity = '0.5';
+                setTimeout(() => {
+                    element.style.opacity = '1';
+                }, 500);
+            });
+            
+            // Update some random confidence scores
+            const confidenceBars = document.querySelectorAll('.confidence-fill');
+            confidenceBars.forEach(bar => {
+                const newWidth = Math.random() * 20 + 75; // 75-95%
+                bar.style.width = `${newWidth}%`;
+            });
+        }
+
+        function runBatchAnalysis() {
+            showToast('⚡ Running batch analysis on all pending requests...');
+            
+            // Simulate batch processing
+            setTimeout(() => {
+                showToast('✅ Batch analysis complete! 12 requests processed.');
+            }, 2000);
+        }
+
+        function respondToRequest(requestId, actionType) {
+            const actionMessages = {
+                'emergency': '🚨 Emergency team has been notified and is responding',
+                'cardiology': '💓 Cardiology team alerted - ETA 3 minutes',
+                'vitals': '📊 Vitals check scheduled immediately',
+                'oxygen': '💨 Oxygen therapy adjusted to 4L/min',
+                'respiratory': '🫁 Respiratory therapist dispatched',
+                'dietary': '🥗 Dietary consultant will visit within 30 minutes',
+                'routine': '📋 Added to routine care schedule',
+                'respond': '📝 Response sent to patient'
+            };
+            
+            const message = actionMessages[actionType] || 'Action completed successfully';
+            showToast(message);
+            
+            // Optionally remove or update the request card
+            if (actionType === 'emergency' || actionType === 'respond') {
+                setTimeout(() => {
+                    const card = document.querySelector(`[data-id="${requestId}"]`);
+                    if (card) {
+                        card.style.opacity = '0.5';
+                        card.style.transform = 'scale(0.95)';
+                    }
+                }, 1000);
+            }
+        }
+
+        function retrain_model() {
+            showToast('🔄 Initiating model retraining...', 'warning');
+            
+            setTimeout(() => {
+                const result = mlModel.retrain([]);
+                showToast(`✅ Model retrained! New accuracy: ${result.accuracy.toFixed(1)}%`);
+                
+                // Update model status
+                const statusElement = document.querySelector('.model-status strong');
+                if (statusElement) {
+                    statusElement.innerHTML = `Model: Multi-Label Medical Classifier<br>
+                        <strong>Accuracy:</strong> ${result.accuracy.toFixed(1)}%<br>
+                        <strong>Last Updated:</strong> Just now<br>
+                        <strong>Training Samples:</strong> 850+`;
+                }
+            }, 3000);
+        }
+
+        function addNewRequest(patientText, room, patientInfo) {
+            const analysis = mlModel.analyzeText(patientText);
+            requestCounter++;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const requestCard = document.createElement('div');
+            requestCard.className = `request-card ${analysis.priority}`;
+            requestCard.setAttribute('data-id', requestCounter);
+            
+            requestCard.innerHTML = `
+                <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.2); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                    Just now
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3>🛏️ ${room}</h3>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin: 0.5rem 0;">
+                            ${patientInfo}
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.3); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                        ${analysis.priority} PRIORITY
+                    </div>
+                </div>
+                
+                <div style="font-size: 1.1rem; line-height: 1.6; margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    💬 "${patientText}"
+                </div>
+
+                <div class="ml-analysis">
+                    <strong>🤖 AI Analysis:</strong>
+                    <div class="symptom-tags">
+                        ${analysis.symptoms.map(symptom => 
+                            `<span class="symptom-tag">${symptom} (${analysis.confidenceScores[symptom].toFixed(0)}%)</span>`
+                        ).join('')}
+                    </div>
+                    <div class="prediction-confidence">
+                        <strong>Predicted Condition: ${analysis.conditionPrediction}</strong>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${analysis.overallConfidence}%;"></div>
+                        </div>
+                        <small>Confidence: ${analysis.overallConfidence}% | Recommendation: ${analysis.recommendation}</small>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                    <button class="action-btn" onclick="respondToRequest(${requestCounter}, 'respond')">📝 Send Response</button>
+                    <button class="action-btn" onclick="respondToRequest(${requestCounter}, 'vitals')">📊 Check Vitals</button>
+                    <button class="action-btn" onclick="respondToRequest(${requestCounter}, 'routine')">📋 Add to Routine</button>
+                </div>
+            `;
+            
+            const container = document.getElementById('requests-container');
+            container.appendChild(requestCard);
+            
+            updateStats();
+            showToast(`🆕 New ${analysis.priority.toLowerCase()} priority request added!`);
+        }
+
+        // Simulate real-time requests
+        function simulateNewRequest() {
+            const sampleRequests = [
+                {
+                    text: "I'm feeling nauseous and have a mild fever. Can someone check on me?",
+                    room: "Room 308-C",
+                    info: "Patient: Lisa Brown | Age: 38 | Condition: Post-surgery"
+                },
+                {
+                    text: "My bandage feels wet and I think it might be bleeding. Should I be concerned?",
+                    room: "Room 304-A",
+                    info: "Patient: David Wilson | Age: 52 | Condition: Wound care"
+                },
+                {
+                    text: "I can't sleep and I'm having anxiety about my procedure tomorrow.",
+                    room: "Room 306-B",
+                    info: "Patient: Sarah Davis | Age: 29 | Condition: Pre-operative"
+                }
+            ];
+            
+            const request = sampleRequests[Math.floor(Math.random() * sampleRequests.length)];
+            addNewRequest(request.text, request.room, request.info);
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            showToast('🤖 AI-Powered ICU Dashboard initialized successfully!');
+            
+            // Simulate periodic new requests
+            setInterval(() => {
+                if (Math.random() < 0.3) { // 30% chance every 10 seconds
+                    simulateNewRequest();
+                }
+            }, 10000);
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshAnalysis();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        runBatchAnalysis();
+                        break;
+                }
+            }
+        });
+
+        // Auto-refresh insights periodically
+        setInterval(() => {
+            const insights = [
+                "⚠️ Escalation Recommended: New respiratory symptoms detected in Ward 2",
+                "📊 Pattern Detected: Increased pain medication requests in evening shift",
+                "🎯 Model Performance: 95% accuracy in last hour classifications",
+                "🔍 Trend Alert: Higher than normal vitals requests in Room 300s",
+                "💡 Suggestion: Consider additional staffing for next shift"
+            ];
+            
+            const randomInsight = insights[Math.floor(Math.random() * insights.length)];
+            const insightItems = document.querySelectorAll('.insight-item');
+            if (insightItems.length > 0) {
+                const randomItem = insightItems[Math.floor(Math.random() * insightItems.length)];
+                randomItem.querySelector('div').innerHTML = `<strong>Live Update:</strong> ${randomInsight}`;
+            }
+        }, 15000);
+    </script>
+</body>
+</html>

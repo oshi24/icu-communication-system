@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered ICU Communication Dashboard - Connected</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #2E86AB, #A23B72);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .connection-status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online { background: #4CAF50; }
+        .status-warning { background: #FF9800; }
+        .status-offline { background: #F44336; }
+
+        .dashboard-content {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 1.5rem;
+            height: fit-content;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-card.critical { background: linear-gradient(135deg, #FF6B6B, #EE5A52); }
+        .stat-card.high { background: linear-gradient(135deg, #FFB74D, #FF9800); }
+        .stat-card.medium { background: linear-gradient(135deg, #81C784, #66BB6A); }
+        .stat-card.low { background: linear-gradient(135deg, #64B5F6, #42A5F5); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .request-card {
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .request-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .request-card.HIGH {
+            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
+            border-left: 8px solid #D32F2F;
+            color: white;
+        }
+
+        .request-card.MEDIUM {
+            background: linear-gradient(135deg, #FFB74D, #FF9800);
+            border-left: 8px solid #F57C00;
+            color: white;
+        }
+
+        .request-card.LOW {
+            background: linear-gradient(135deg, #81C784, #66BB6A);
+            border-left: 8px solid #388E3C;
+            color: white;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+
+        .action-btn {
+            padding: 0.6rem 1.2rem;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+
+        .ml-analysis {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .symptom-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .symptom-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .simulation-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>🤖 AI-Powered ICU Communication Dashboard</h1>
+            <div class="connection-status">
+                <div class="status-indicator">
+                    <div class="status-dot" id="backend-status"></div>
+                    Backend Connection
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="ml-status"></div>
+                    ML Model Status
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="db-status"></div>
+                    Database Connection
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot status-online"></div>
+                    Real-time Updates
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="main-content">
+                <div class="controls">
+                    <div class="stats">
+                        <div class="stat-card high">
+                            <span class="stat-number" id="high-count">0</span>
+                            <small>High Priority</small>
+                        </div>
+                        <div class="stat-card medium">
+                            <span class="stat-number" id="medium-count">0</span>
+                            <small>Medium</small>
+                        </div>
+                        <div class="stat-card low">
+                            <span class="stat-number" id="low-count">0</span>
+                            <small>Low Priority</small>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="refreshDashboard()">🔄 Refresh</button>
+                        <button class="btn btn-success" onclick="checkSystemStatus()">📊 System Status</button>
+                    </div>
+                </div>
+
+                <!-- Test Panel -->
+                <div class="simulation-panel">
+                    <h3>🧪 Test Button Press Simulation</h3>
+                    <p>Simulate a patient pressing a button to test the ML system:</p>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <select id="bed-select" style="padding: 0.5rem; border-radius: 5px; border: none;">
+                            <option value="1A">Bed 1A - John D. (Cardiovascular Disease)</option>
+                            <option value="1B">Bed 1B - Mary T. (Respiratory Infection)</option>
+                            <option value="2A">Bed 2A - Robert K. (Hypertension)</option>
+                            <option value="2B">Bed 2B - Lisa S. (Pneumonia)</option>
+                            <option value="3A">Bed 3A - David W. (Asthma)</option>
+                            <option value="3B">Bed 3B - Sarah M. (Diabetes Complications)</option>
+                        </select>
+                        <select id="button-select" style="padding: 0.5rem; border-radius: 5px; border: none;">
+                            <option value="1">Button 1</option>
+                            <option value="2">Button 2</option>
+                            <option value="3">Button 3</option>
+                            <option value="4">Button 4</option>
+                        </select>
+                        <button class="btn btn-warning" onclick="simulateButtonPress()">📱 Press Button</button>
+                        <button class="btn btn-primary" onclick="getMLData()">🧠 Get ML Predictions</button>
+                    </div>
+                </div>
+
+                <div id="requests-container">
+                    <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; color: #333;">📢 Live Communication Requests</h2>
+                    <div id="no-requests" style="text-align: center; padding: 2rem; color: #666;">
+                        No active requests. System ready to receive communications.
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div style="background: linear-gradient(135deg, #4CAF50, #45a049); color: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <h3>🔗 Connection Status</h3>
+                    <div id="connection-info" style="margin: 1rem 0;">
+                        <div>Backend: <span id="backend-url">Checking...</span></div>
+                        <div>Last Update: <span id="last-update">Never</span></div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <h4>📊 System Information</h4>
+                    <div id="system-info" style="margin: 1rem 0;">
+                        <div>Total Patients: <span id="total-patients">0</span></div>
+                        <div>Active Requests: <span id="active-requests">0</span></div>
+                        <div>ML Model: <span id="ml-model-status">Loading...</span></div>
+                        <div>Database: <span id="db-status-text">Loading...</span></div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 10px; margin-bottom: 1rem;">
+                    <h4>🎯 ML Test Results</h4>
+                    <div id="ml-results" style="margin: 1rem 0; font-size: 0.9rem;">
+                        Click "Get ML Predictions" to see AI analysis
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 1.5rem; border-radius: 10px;">
+                    <h4>📝 Request Log</h4>
+                    <div id="request-log" style="margin: 1rem 0; max-height: 200px; overflow-y: auto; font-size: 0.8rem;">
+                        No requests logged yet.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="notification-toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE_URL = 'http://localhost:5000';
+        let systemStatus = {};
+
+        // Utility Functions
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `notification-toast show`;
+            
+            if (type === 'error') {
+                toast.style.background = '#dc3545';
+            } else if (type === 'warning') {
+                toast.style.background = '#ffc107';
+                toast.style.color = '#000';
+            } else {
+                toast.style.background = '#28a745';
+                toast.style.color = '#fff';
+            }
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateConnectionStatus(isConnected) {
+            const backendDot = document.getElementById('backend-status');
+            const mlDot = document.getElementById('ml-status');
+            const dbDot = document.getElementById('db-status');
+            
+            if (isConnected) {
+                backendDot.className = 'status-dot status-online';
+                mlDot.className = 'status-dot status-online';
+                dbDot.className = 'status-dot status-online';
+                document.getElementById('backend-url').textContent = API_BASE_URL;
+            } else {
+                backendDot.className = 'status-dot status-offline';
+                mlDot.className = 'status-dot status-offline';
+                dbDot.className = 'status-dot status-offline';
+                document.getElementById('backend-url').textContent = 'Disconnected';
+            }
+            
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+
+        function logRequest(message) {
+            const logElement = document.getElementById('request-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            
+            if (logElement.textContent === 'No requests logged yet.') {
+                logElement.textContent = logEntry;
+            } else {
+                logElement.textContent = logEntry + logElement.textContent;
+            }
+        }
+
+        // API Functions
+        async function checkSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/system_status`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                systemStatus = await response.json();
+                
+                // Update UI
+                updateConnectionStatus(true);
+                document.getElementById('total-patients').textContent = systemStatus.total_patients;
+                document.getElementById('active-requests').textContent = systemStatus.active_requests;
+                document.getElementById('ml-model-status').textContent = systemStatus.ml_model_loaded ? 'Loaded ✅' : 'Not Loaded ❌';
+                document.getElementById('db-status-text').textContent = systemStatus.database_status === 'connected' ? 'Connected ✅' : 'Disconnected ❌';
+                
+                showToast('✅ Connected to backend server!');
+                return true;
+                
+            } catch (error) {
+                console.error('System status check failed:', error);
+                updateConnectionStatus(false);
+                showToast('❌ Cannot connect to backend server. Make sure Flask server is running on port 5000.', 'error');
+                return false;
+            }
+        }
+
+        async function getMLData() {
+            const bedNumber = document.getElementById('bed-select').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/get_ml_data?bed_number=${bedNumber}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update ML Results section
+                const mlResults = document.getElementById('ml-results');
+                mlResults.innerHTML = `
+                    <div><strong>Patient:</strong> ${data.patient_name}</div>
+                    <div><strong>Condition:</strong> ${data.condition}</div>
+                    <div><strong>Predicted Symptoms:</strong></div>
+                    ${data.predicted_symptoms.map(s => 
+                        `<div style="margin-left: 1rem;">• ${s.symptom} (${(s.probability * 100).toFixed(1)}%)</div>`
+                    ).join('')}
+                    <div style="margin-top: 1rem;"><strong>Button Options:</strong></div>
+                    ${Object.entries(data.button_options).map(([btn, opt]) => 
+                        `<div style="margin-left: 1rem;">Button ${btn}: ${opt.message} (${opt.risk})</div>`
+                    ).join('')}
+                `;
+                
+                showToast(`🧠 ML analysis complete for ${data.patient_name}`);
+                logRequest(`ML analysis for bed ${bedNumber}: ${data.predicted_symptoms.length} symptoms predicted`);
+                
+            } catch (error) {
+                console.error('ML data fetch failed:', error);
+                showToast('❌ Failed to get ML data', 'error');
+            }
+        }
+
+        async function simulateButtonPress() {
+            const bedNumber = document.getElementById('bed-select').value;
+            const buttonNumber = parseInt(document.getElementById('button-select').value);
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/button_pressed`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        bed_number: bedNumber,
+                        button: buttonNumber
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                showToast(`📱 Button ${buttonNumber} pressed by ${data.patient_name}: ${data.message}`);
+                logRequest(`Button ${buttonNumber} pressed in bed ${bedNumber}: ${data.message} (${data.risk_level} priority)`);
+                
+                // Refresh the dashboard to show new request
+                refreshDashboard();
+                
+            } catch (error) {
+                console.error('Button press simulation failed:', error);
+                showToast('❌ Failed to simulate button press', 'error');
+            }
+        }
+
+        async function refreshDashboard() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/nurse_dashboard`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Update stats
+                const stats = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+                data.requests.forEach(req => {
+                    if (stats[req.riskLevel] !== undefined) {
+                        stats[req.riskLevel]++;
+                    }
+                });
+                
+                document.getElementById('high-count').textContent = stats.HIGH;
+                document.getElementById('medium-count').textContent = stats.MEDIUM;
+                document.getElementById('low-count').textContent = stats.LOW;
+                
+                // Update requests display
+                const container = document.getElementById('requests-container');
+                const noRequestsMsg = document.getElementById('no-requests');
+                
+                if (data.requests.length === 0) {
+                    noRequestsMsg.style.display = 'block';
+                    // Remove existing request cards
+                    const existingCards = container.querySelectorAll('.request-card');
+                    existingCards.forEach(card => card.remove());
+                } else {
+                    noRequestsMsg.style.display = 'none';
+                    
+                    // Clear existing cards
+                    const existingCards = container.querySelectorAll('.request-card');
+                    existingCards.forEach(card => card.remove());
+                    
+                    // Add new cards
+                    data.requests.forEach(request => {
+                        const card = createRequestCard(request);
+                        container.appendChild(card);
+                    });
+                }
+                
+                showToast('🔄 Dashboard refreshed');
+                
+            } catch (error) {
+                console.error('Dashboard refresh failed:', error);
+                showToast('❌ Failed to refresh dashboard', 'error');
+            }
+        }
+
+        function createRequestCard(request) {
+            const card = document.createElement('div');
+            card.className = `request-card ${request.riskLevel}`;
+            card.setAttribute('data-id', request.id);
+            
+            const timeAgo = new Date(request.timestamp).toLocaleTimeString();
+            
+            card.innerHTML = `
+                <div style="position: absolute; top: 1rem; right: 1rem; background: rgba(0,0,0,0.2); padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem;">
+                    ${timeAgo}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                    <div>
+                        <h3>🛏️ ${request.bedNumber}</h3>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin: 0.5rem 0;">
+                            ${request.patientId} | Status: ${request.status}
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.3); padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem;">
+                        ${request.riskLevel} PRIORITY
+                    </div>
+                </div>
+                
+                <div style="font-size: 1.1rem; line-height: 1.6; margin: 1rem 0; padding: 1rem; background: rgba(255,255,255,0.1); border-radius: 8px;">
+                    💬 "${request.message}"
+                </div>
+
+                ${request.predicted_symptoms ? `
+                    <div class="ml-analysis">
+                        <strong>🤖 AI Analysis:</strong>
+                        <div class="symptom-tags">
+                            ${request.predicted_symptoms.map(s => 
+                                `<span class="symptom-tag">${s.symptom} (${(s.probability * 100).toFixed(0)}%)</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+                    <button class="action-btn" onclick="acknowledgeRequest('${request.id}')">✅ Acknowledge</button>
+                    <button class="action-btn" onclick="resolveRequest('${request.id}')">✔️ Resolve</button>
+                    <button class="action-btn" onclick="respondToRequest('${request.id}')">📝 Respond</button>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function acknowledgeRequest(requestId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/acknowledge_request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ request_id: requestId })
+                });
+                
+                if (response.ok) {
+                    showToast('✅ Request acknowledged');
+                    refreshDashboard();
+                }
+                
+            } catch (error) {
+                console.error('Acknowledge failed:', error);
+                showToast('❌ Failed to acknowledge request', 'error');
+            }
+        }
+
+        async function resolveRequest(requestId) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/resolve_request`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ request_id: requestId })
+                });
+                
+                if (response.ok) {
+                    showToast('✔️ Request resolved');
+                    refreshDashboard();
+                }
+                
+            } catch (error) {
+                console.error('Resolve failed:', error);
+                showToast('❌ Failed to resolve request', 'error');
+            }
+        }
+
+        function respondToRequest(requestId) {
+            showToast('📝 Response sent to patient');
+            logRequest(`Response sent for request ${requestId}`);
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            showToast('🤖 Initializing AI-Powered ICU Dashboard...');
+            
+            // Check system status first
+            const connected = await checkSystemStatus();
+            
+            if (connected) {
+                // Load initial dashboard data
+                await refreshDashboard();
+                
+                // Set up auto-refresh every 10 seconds
+                setInterval(refreshDashboard, 10000);
+            }
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshDashboard();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        checkSystemStatus();
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
